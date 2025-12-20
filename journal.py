@@ -25,7 +25,7 @@ weather_data = requests.get(weather_url, timeout=10).json()
 weather = weather_data["current_weather"]
 
 weather_block = f"""
-##  Weather ({CITY})
+## 🌤 Weather ({CITY})
 - Temperature: {weather['temperature']} °C
 - Wind speed: {weather['windspeed']} km/h
 """
@@ -44,9 +44,9 @@ if file_path.exists():
     if MARKER in content:
         manual_part = content.split(MARKER, 1)[1]
     else:
-        manual_part = "\n\n##  Manual Notes\n\n"
+        manual_part = "\n\n## ✍️ Manual Notes\n\n"
 else:
-    manual_part = "\n\n## ️ Manual Notes\n\n"
+    manual_part = "\n\n## ✍️ Manual Notes\n\n"
 
 file_path.write_text(
     auto_block + manual_part,
