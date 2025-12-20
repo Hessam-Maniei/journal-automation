@@ -1,22 +1,57 @@
+from pathlib import Path
 from datetime import datetime
-import os
+import requests
 
-def create_journal():
-    today = datetime.now().strftime("%Y-%m-%d")
+# ---------- Config ----------
+CITY = "Dortmund"
+LAT = 51.5136
+LON = 7.4653
 
-    folder = "journal"
-    os.makedirs(folder, exist_ok=True)
+MARKER = "<!-- MANUAL NOTES BELOW THIS LINE -->"
 
-    path = os.path.join(folder, f"{today}.md")
+journal_dir = Path("journal")
+journal_dir.mkdir(exist_ok=True)
 
-    if not os.path.exists(path):
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(f"# Journal Entry – {today}\n\n")
-            f.write("## What I learned today\n\n- \n")
-        print(f"Created: {path}")
+today = datetime.utcnow().strftime("%Y-%m-%d")
+file_path = journal_dir / f"{today}.md"
+
+# ---------- Weather ----------
+weather_url = (
+    "https://api.open-meteo.com/v1/forecast"
+    f"?latitude={LAT}&longitude={LON}&current_weather=true"
+)
+
+weather_data = requests.get(weather_url, timeout=10).json()
+weather = weather_data["current_weather"]
+
+weather_block = f"""
+##  Weather ({CITY})
+- Temperature: {weather['temperature']} °C
+- Wind speed: {weather['windspeed']} km/h
+"""
+
+# ---------- Header ----------
+auto_block = f"""# {today}
+
+{weather_block}
+
+{MARKER}
+"""
+
+# ---------- File logic ----------
+if file_path.exists():
+    content = file_path.read_text(encoding="utf-8")
+    if MARKER in content:
+        manual_part = content.split(MARKER, 1)[1]
     else:
-        print(f"Already exists: {path}")
+        manual_part = "\n\n##  Manual Notes\n\n"
+else:
+    manual_part = "\n\n## ️ Manual Notes\n\n"
 
-if __name__ == "__main__":
-    create_journal()
+file_path.write_text(
+    auto_block + manual_part,
+    encoding="utf-8"
+)
+
+print(f"Journal updated: {file_path}")
 
