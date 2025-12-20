@@ -3,10 +3,7 @@ name: Run Daily Journal
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 6 * * *"   # every day at 06:00 UTC
-
-permissions:
-  contents: write   # 🔴 THIS WAS MISSING
+    - cron: "0 6 * * *"   # 06:00 UTC daily
 
 jobs:
   journal:
@@ -21,13 +18,16 @@ jobs:
         with:
           python-version: "3.10"
 
+      - name: Install dependencies
+        run: pip install requests
+
       - name: Run journal script
         run: python journal.py
 
-      - name: Commit and push journal entry
+      - name: Commit journal entry
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
           git add journal/
           git commit -m "Daily journal entry" || echo "Nothing to commit"
-          git push  
+          git push
