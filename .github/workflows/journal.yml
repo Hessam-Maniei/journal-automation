@@ -3,7 +3,7 @@ name: Run Daily Journal
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 6 * * *"   # 06:00 UTC daily
+    - cron: "0 6 * * *"   # 06:00 UTC daily (UTC)
 
 jobs:
   journal:
@@ -11,8 +11,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-      - uses: actions/checkout@v4
-
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -24,25 +23,14 @@ jobs:
 
       - name: Run journal script
         run: python journal.py
-      - name: Commit journal
-      run: |
-        git status
-        git add journal/
-        git diff --cached --quiet || git commit -m "📅 Daily journal update"
-     - name: Configure Git
-       run: |
-         git config --global user.name "github-actions[bot]"
-         git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Commit journal entry
+      - name: Configure Git
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit journal
+        run: |
           git add journal/
-          git commit -m "Daily journal entry" || echo "Nothing to commit"
+          git diff --cached --quiet || git commit -m "📅 Daily journal update"
           git push
-
-
-
-
-
