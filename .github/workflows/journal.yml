@@ -11,7 +11,8 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -23,6 +24,15 @@ jobs:
 
       - name: Run journal script
         run: python journal.py
+      - name: Commit journal
+      run: |
+        git status
+        git add journal/
+        git diff --cached --quiet || git commit -m "📅 Daily journal update"
+     - name: Configure Git
+       run: |
+         git config --global user.name "github-actions[bot]"
+         git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Commit journal entry
         run: |
@@ -31,3 +41,8 @@ jobs:
           git add journal/
           git commit -m "Daily journal entry" || echo "Nothing to commit"
           git push
+
+
+
+
+
