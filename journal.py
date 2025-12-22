@@ -1,37 +1,56 @@
-name: Run Daily Journal
+from pathlib import Path
+from datetime import datetime
+import requests
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: "0 6 * * *"   # 06:00 UTC daily
+# ---------- Config ----------
+CITY = "Dortmund"
+LAT = 51.5136
+LON = 7.4653
 
-jobs:
-  journal:
-    runs-on: ubuntu-latest
+MARKER = "<!-- MANUAL NOTES BELOW THIS LINE -->"
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+journal_dir = Path("journal")
+journal_dir.mkdir(exist_ok=True)
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
+today = datetime.utcnow().strftime("%Y-%m-%d")
+file_path = journal_dir / f"{today}.md"
 
-      - name: Install dependencies
-        run: pip install requests
+# ---------- Weather ----------
+weather_url = (
+    "https://api.open-meteo.com/v1/forecast"
+    f"?latitude={LAT}&longitude={LON}&current_weather=true"
+)
 
-      - name: Run journal script
-        run: python journal.py
+weather_data = requests.get(weather_url, timeout=10).json()
+weather = weather_data["current_weather"]
 
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+weather_block = f"""
+## 🌤 Weather ({CITY})
+- Temperature: {weather['temperature']} °C
+- Wind speed: {weather['windspeed']} km/h
+"""
 
-      - name: Commit & push journal
-        run: |
-          git status
-          git add journal/
-          git diff --cached --quiet || git commit -m "📅 Daily journal update"
-          git push
+# ---------- Header ----------
+auto_block = f"""# {today}
+
+{weather_block}
+
+{MARKER}
+"""
+
+# ---------- File logic ----------
+if file_path.exists():
+    content = file_path.read_text(encoding="utf-8")
+    if MARKER in content:
+        manual_part = content.split(MARKER, 1)[1]
+    else:
+        manual_part = "\n\n## ✍️ Manual Notes\n\n"
+else:
+    manual_part = "\n\n## ✍️ Manual Notes\n\n"
+
+file_path.write_text(
+    auto_block + manual_part,
+    encoding="utf-8"
+)
+
+print(f"Journal updated: {file_path}")
